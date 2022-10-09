@@ -2306,7 +2306,6 @@ $resultdate = format_time($date->getTimestamp(), false, null, null, false, true)
 						<?php 
 	$mytopid = $user['id'];
 	$result4478 = $db->query("SELECT * FROM `gs_codes` WHERE `by`='$mytopid' AND `used`='0'") or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
-   // $invby = $db->fetch_assoc($result447);
 	if ($db->num_rows($result4478)){
 	?>	<p>Do you have someone you would like to join us? Send them the <a href="register.php">register</a> link along with one of the following codes.</p><br>
 	<?php foreach($result4478 as $item): ?>
