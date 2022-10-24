@@ -29,20 +29,23 @@ require PUN_ROOT.'header.php';
 
 
 if(isset($_GET['discord']) && isset($_GET['id'])){
-									$resetid = $_GET['id'];
+									// Add an extra layer of security
+									confirm_referrer('admin_requests.php');
+									
+									// CSRF check
+									check_csrf($_GET['csrf_token']);
+
+									$resetid = intval($_GET['id']); // We do not need to escape this one as it will be casted to integer, which will eliminate the possibility of a sql injection.
 									
 									if($_GET['discord'] == "approve" && isset($_GET['new'])){
-										$resetidnew = $_GET['new'];
-										$db->query("UPDATE `gs_users` SET `discord` = '$resetidnew' WHERE `id` = '$resetid'") or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
-										$db->query("UPDATE `gs_users` SET `discord_new` = NULL WHERE `id` = '$resetid'") or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
-										$db->query("UPDATE `gs_users` SET `discord_reason` = NULL WHERE `id` = '$resetid'") or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
+										$resetidnew = $db->escape($_GET['new']);
+										$db->query("UPDATE `gs_users` SET `discord` = '$resetidnew', `discord_new` = NULL, `discord_reason` = NULL WHERE `id` = " . $resetid) or error('Unable to update user', __FILE__, __LINE__, $db->error());
 
 										//
 										redirect('admin_requests.php', "Request was approved");
 										die();
 									} elseif($_GET['discord'] == "decline"){
-										$db->query("UPDATE `gs_users` SET `discord_new` = NULL WHERE `id` = '$resetid'") or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
-										$db->query("UPDATE `gs_users` SET `discord_reason` = NULL WHERE `id` = '$resetid'") or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
+										$db->query("UPDATE `gs_users` SET `discord_new` = NULL, `discord_reason` = NULL WHERE `id` = " . $resetid) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
 
 											//
 										redirect('admin_requests.php', "Request was declined");
@@ -56,27 +59,25 @@ if(isset($_GET['discord']) && isset($_GET['id'])){
 								
 								
 if(isset($_GET['hwid']) && isset($_GET['id'])){
-									$resetid = $_GET['id'];
+
+									// Add an extra layer of security
+									confirm_referrer('admin_requests.php');
+									
+									// CSRF check
+									check_csrf($_GET['csrf_token']);
+
+									$resetid = intval($_GET['id']);
 									
 									if($_GET['hwid'] == "approve" && isset($_GET['new']) && isset($_GET['ip'])){
-										$resetidnew = $_GET['new'];
-										$resetipnew = $_GET['ip'];
-										$db->query("UPDATE `gs_users` SET `hwid` = '$resetidnew' WHERE `id` = '$resetid'") or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
-										$db->query("UPDATE `gs_users` SET `hwid_new` = NULL WHERE `id` = '$resetid'") or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
-										$db->query("UPDATE `gs_users` SET `hwid_reason` = NULL WHERE `id` = '$resetid'") or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
-                                        $db->query("UPDATE `gs_users` SET `hwid_ip_new` = NULL WHERE `id` = '$resetid'") or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
-										$db->query("UPDATE `gs_users` SET `parts` = `newparts` WHERE `id` = '$resetid'") or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
-										$db->query("UPDATE `gs_users` SET `newparts` = NULL WHERE `id` = '$resetid'") or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
-                                        
-										$db->query("UPDATE `gs_users` SET `hwid_ip` = '$resetipnew' WHERE `id` = '$resetid'") or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
+										$resetidnew = intval($_GET['new']);
+										$resetipnew = $db->escape($_GET['ip']);
+										$db->query("UPDATE `gs_users` SET `hwid` = '$resetidnew', `hwid_new` = NULL, `hwid_reason` = NULL, `hwid_ip` = '$resetipnew', `hwid_ip_new`, `parts` = `newparts`= NULL, `newparts` = NULL WHERE `id` = '$resetid'") or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
 
 										//
 										redirect('admin_requests.php', "Request was approved");
 										die();
 									} elseif($_GET['hwid'] == "decline"){
-										$db->query("UPDATE `gs_users` SET `hwid_new` = NULL WHERE `id` = '$resetid'") or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
-										$db->query("UPDATE `gs_users` SET `hwid_reason` = NULL WHERE `id` = '$resetid'") or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
-										$db->query("UPDATE `gs_users` SET `hwid_ip_new` = NULL WHERE `id` = '$resetid'") or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
+										$db->query("UPDATE `gs_users` SET `hwid_new` = NULL, `hwid_reason` = NULL, `hwid_ip_new` = NULL WHERE `id` = '$resetid'") or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
 
 											//
 										redirect('admin_requests.php', "Request was declined");
@@ -128,8 +129,8 @@ if(isset($_GET['hwid']) && isset($_GET['id'])){
 							<td class="tc3"><?php echo $item['discord_ip'] ?></td>
 							<td class="tc3"><?php echo $item['discord_new'] ?></td>
 							<td class="tc3"><?php echo $item['discord_ip_new'] ?></td>
-							<td class="tc3"><?php echo $item['discord_reason'] ?></td>
-							<td class="tc3"><a href="admin_requests.php?discord=approve&id=<?php echo $item['id']?>&new=<?php echo $item['discord_new']?>">Approve</a> / <a href="admin_requests.php?discord=decline&id=<?php echo $item['id']?>">Decline</a></td>
+							<td class="tc3"><?php echo pun_htmlspecialchars($item['discord_reason']) ?></td>
+							<td class="tc3"><a href="admin_requests.php?csrf_token=<?php echo pun_csrf_token() ?>&discord=approve&id=<?php echo $item['id']?>&new=<?php echo $item['discord_new']?>">Approve</a> / <a href="admin_requests.php?csrf_token=<?php echo pun_csrf_token() ?>&discord=decline&id=<?php echo $item['id']?>">Decline</a></td>
 							
 							
 							
@@ -183,12 +184,12 @@ if(isset($_GET['hwid']) && isset($_GET['id'])){
 						
 						<td class="tc3"><a href="profile.php?id=<?php echo $item['id'] ?>"><?php echo colorize_group($item['username'],$item['group_id']) ?></a></td>
 							
-							<td class="tc3"><?php echo $item['parts'] ?></td>
+							<td class="tc3"><?php echo pun_htmlspecialchars($item['parts']) ?></td>
 							<td class="tc3"><?php echo $item['registration_ip'] ?></td>
-							<td class="tc3"><?php echo $item['newparts'] ?></td>
+							<td class="tc3"><?php echo pun_htmlspecialchars($item['newparts']) ?></td>
 							<td class="tc3"><?php echo $item['hwid_ip_new'] ?></td>
-							<td class="tc3"><?php echo $item['hwid_reason'] ?></td>
-							<td class="tc3"><a href="admin_requests.php?hwid=approve&id=<?php echo $item['id']?>&new=<?php echo $item['hwid_new']?>&ip=<?php echo $item['ip_new']?>">Approve</a> / <a href="admin_requests.php?hwid=decline&id=<?php echo $item['id']?>">Decline</a></td>
+							<td class="tc3"><?php echo pun_htmlspecialchars($item['hwid_reason']) ?></td>
+							<td class="tc3"><a href="admin_requests.php?csrf_token=<?php echo pun_csrf_token() ?>&hwid=approve&id=<?php echo $item['id']?>&new=<?php echo $item['hwid_new']?>&ip=<?php echo $item['ip_new']?>">Approve</a> / <a href="admin_requests.php?csrf_token=<?php echo pun_csrf_token() ?>&hwid=decline&id=<?php echo $item['id']?>">Decline</a></td>
 							
 							
 							
