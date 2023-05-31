@@ -76,8 +76,8 @@ $code=$ga->getCode($cur_user['ga']);
 if ($code!=$_POST['2fa']){
 	if($_POST['2fa']== $cur_user['ga']){
 		$histopid = $cur_user['id'];
-			$db->query('UPDATE users SET ga_enabled=0 WHERE id='.$histopid) or error('Unable to update user info', __FILE__, __LINE__, $db->error());
-			$db->query('UPDATE users SET ga=NULL WHERE id='.$histopid) or error('Unable to update user info', __FILE__, __LINE__, $db->error());
+			$db->query('UPDATE '.$db->prefix.'users SET ga_enabled=0 WHERE id='.$histopid) or error('Unable to update user info', __FILE__, __LINE__, $db->error());
+			$db->query('UPDATE '.$db->prefix.'users SET ga=NULL WHERE id='.$histopid) or error('Unable to update user info', __FILE__, __LINE__, $db->error());
 	} else {
 	  $errors[] = 'Invalid two factor authentication code.';
 	}
